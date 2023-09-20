@@ -1,10 +1,9 @@
 from logger import log_request
 import os
 
-# Pasta base dos arquivos a serem servidos
 BASE_DIR = "./server"
 
-# Função para manipular uma única conexão de cliente
+# Manipula conexão de cliente
 def handle_client(client_socket):
     client_addr = client_socket.getpeername()
     request = client_socket.recv(1024).decode()
@@ -30,6 +29,32 @@ def handle_client(client_socket):
             else:
                 response_code = "404 Not Found"
                 response_data = b"File not found"
+                
+        elif method == "PUT": #curl -X PUT -d @put_index.html http://localhost:8080/index.html
+            file_path = os.path.join(BASE_DIR, path[1:])
+            try:
+                with open(file_path, "wb") as file:
+                    file.write(b"Resource updated via PUT")
+                response_code = "204 No Content"
+                response_data = b""
+            except FileNotFoundError:
+                        response_code = "404 Not Found"
+                        response_data = b"File not found"
+            except Exception as e:
+                response_code = "500 Internal Server Error"
+                response_data = b"An error occurred while processing the PUT request"
+        
+        elif method == "POST":
+            file_path = os.path.join(BASE_DIR, path[1:])
+            try: 
+                with open(file_path, "wb") as file:
+                    file.write(b"Resource created via POST")
+                response_code = "201 Created"
+                response_data = b""
+            except Exception as e:
+                response_code = "500 Internal Server Error"
+                response_data = b"An error occurred while processing the POST request"
+
         else:
             response_code = "502 Bad Gateway" # metodo nao suportado
             response_data = b"Unsupported method"
