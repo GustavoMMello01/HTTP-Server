@@ -1,13 +1,19 @@
 import datetime
 import threading
+import queue
 
-# Lock para sincronizar a escrita no arquivo de log
+log_queue = queue.Queue()
 log_lock = threading.Lock()
+
+def log_worker():
+    while True:
+        log_entry = log_queue.get()
+        with log_lock:
+            with open("log/server_log.txt", "a") as log_file:
+                log_file.write(log_entry)
+        log_queue.task_done()
 
 def log_request(client_addr, method, path, response_code):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_entry = f"{timestamp} - {client_addr[0]}:{client_addr[1]} - [{method} {path}] - {response_code}\n"
-    
-    with log_lock:
-        with open("log/server_log.txt", "a") as log_file:
-            log_file.write(log_entry)
+    log_queue.put(log_entry)
