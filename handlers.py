@@ -5,6 +5,10 @@ BASE_DIR = "./server"
 
 # Manipula conexão de cliente
 def handle_client(client_socket):
+    server = "server/1.0"
+    content_type = ""
+    response_length = 0
+
     client_addr = client_socket.getpeername()
     request = client_socket.recv(1024).decode()
 
@@ -20,12 +24,23 @@ def handle_client(client_socket):
         path = first_line[1]
 
         if method == "GET":
-            file_path = os.path.join(BASE_DIR, path[1:])  # Remove a barra inicial
+            file_path = os.path.join(BASE_DIR, path[1:])
 
             if os.path.exists(file_path) and os.path.isfile(file_path):
                 response_code = "200 OK"
                 with open(file_path, "rb") as file:
                     response_data = file.read()
+                
+                if file_path.endswith(".html"):
+                    content_type = "text/html"
+                elif file_path.endswith(".jpg"):
+                    content_type = "image/jpeg"
+                elif file_path.endswith(".mp4"):
+                    content_type = "video/mp4"
+                elif file_path.endswith(".mp3"):
+                    content_type = "audio/mp3"
+                
+                content_length = len(response_data)
             else:
                 response_code = "404 Not Found"
                 response_data = b"File not found"
@@ -64,4 +79,4 @@ def handle_client(client_socket):
         client_socket.send(response.encode())
         client_socket.close()
 
-        log_request(client_addr, method, path, response_code)
+        log_request(client_addr, method, path, response_code, server, content_type, content_length)
